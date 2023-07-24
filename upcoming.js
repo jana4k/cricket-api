@@ -2,6 +2,7 @@ const express = require("express");
 const axios = require("axios");
 const cheerio = require("cheerio");
 const { CommentaryExtractor } = require("./commentary");
+const { ScorecardExtractor } = require("./scorecard");
 const app = express();
 const port = 3076;
 const { getFlagURL } = require("./flags");
@@ -175,7 +176,17 @@ app.get("/commentary/:matchID/:title", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-
+app.get("/scorecard/:matchID/:title", async (req, res) => {
+  try {
+    const { matchID, title } = req.params;
+    const scorecardExtractor = new ScorecardExtractor(cheerio);
+    const scorecard = await scorecardExtractor.getScorecard(matchID, title);
+    res.json(scorecard);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
