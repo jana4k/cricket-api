@@ -182,10 +182,11 @@ class ScorecardExtractor {
       const teamAbbreviation = title.split(" ")[0];
       const id = this.extractPlayerId($(element).attr("onclick"));
 
-      // Separate batting and bowling data
+      // Separate batting, bowling, and fall of wickets data
       const players = this.extractPlayersData($, id);
       const battingData = players.filter((player) => player.runs !== undefined);
       const bowlingData = players.filter((player) => player.runs === undefined);
+      const fallOfWickets = this.extractFallOfWicketsData($, id);
 
       if (title !== "Commentary" && title !== "Summary" && title !== "Teams") {
         inningsData.push({
@@ -194,11 +195,37 @@ class ScorecardExtractor {
           score,
           battingData,
           bowlingData,
+          fallOfWickets,
         });
       }
     });
 
     return inningsData;
+  }
+
+  extractFallOfWicketsData($, id) {
+    const fallOfWickets = [];
+
+    $(
+      `div#${id} div.list-group div.cb-list-item.ui-header.ui-header-small:contains("Fall Of Wickets")`
+    )
+      .next()
+      .find("table tbody tr")
+      .each((index, element) => {
+        const wicketNumber = $(element).find("td:nth-child(1)").text().trim();
+        const runsScored = $(element).find("td:nth-child(2)").text().trim();
+        const oversPlayed = $(element).find("td:nth-child(3)").text().trim();
+        const playerName = $(element).find("td:nth-child(4)").text().trim();
+
+        fallOfWickets.push({
+          wicketNumber,
+          runsScored,
+          oversPlayed,
+          playerName,
+        });
+      });
+
+    return fallOfWickets;
   }
 
   extractPlayerIdFromLink(link) {
