@@ -131,7 +131,9 @@ class ScorecardExtractor {
       const sixes = $(element).find("td:nth-child(4)").text().trim();
       const strikeRate = $(element).find("td:nth-child(5)").text().trim();
       let outDescription = ""; // Initialize outDescription as an empty string
-
+      const playerId = this.extractPlayerIdFromLink(
+        $(element).find("td:nth-child(1) a").attr("href")
+      );
       // Use the "next" function to access the next row and retrieve outDescription
       const outDescriptionElement = $(element).next().find("span.out-desc");
       if (outDescriptionElement.length > 0) {
@@ -146,6 +148,7 @@ class ScorecardExtractor {
         ) {
           players.push({
             playerName,
+            playerId,
             runs,
             balls,
             fours,
@@ -161,6 +164,7 @@ class ScorecardExtractor {
 
           players.push({
             playerName,
+            playerId,
             oversBowled,
             maidens,
             runsGiven,
