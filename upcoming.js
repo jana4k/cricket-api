@@ -4,7 +4,7 @@ const cheerio = require("cheerio");
 const { CommentaryExtractor } = require("./commentary");
 const { ScorecardExtractor } = require("./scorecard");
 const app = express();
-const port = 3076;
+const port = 3000;
 const { getFlagURL } = require("./flags");
 
 class MatchDetailsExtractor {

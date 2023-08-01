@@ -19,75 +19,191 @@ class ScorecardExtractor {
 
   extractScorecardData(html) {
     const $ = this.cheerio.load(html);
-    const scorecardData = {};
+    const inningsData = this.extractInningsData($);
+    const matchDetails = this.extractMatchDetails($, inningsData);
 
-    // Extract match info
-    scorecardData.matchInfo = this.extractMatchInfo($);
-
-    // Extract innings data
-    scorecardData.inningsData = this.extractInningsData($);
-
-    return scorecardData;
+    return {
+      matchDetails,
+      inningsData,
+    };
   }
 
-  extractMatchInfo($) {
-    const matchInfo = {};
-    // Implement logic to extract match information
-    matchInfo.match = $(".ui-li-heading").eq(0).text().trim();
-    matchInfo.date = $(".ui-li-heading").eq(1).text().trim();
-    matchInfo.matchTime = $(".ui-li-heading").eq(2).text().trim();
-    matchInfo.tossResult = $(".ui-li-heading").eq(3).text().trim();
-    matchInfo.stadium = $(".ui-li-heading").eq(4).text().trim();
-    matchInfo.umpires = $(".ui-li-heading").eq(5).text().trim();
-    matchInfo.thirdUmpire = $(".ui-li-heading").eq(6).text().trim();
-    matchInfo.matchReferee = $(".ui-li-heading").eq(7).text().trim();
-    matchInfo.seriesName = $(".ui-li-heading").eq(8).text().trim();
-    matchInfo.wiPlayingXI = $(".ui-li-heading").eq(9).text().trim();
-    matchInfo.wiStandBy = $(".ui-li-heading").eq(10).text().trim();
-    matchInfo.wiSupportStaff = $(".ui-li-heading").eq(11).text().trim();
-    matchInfo.indPlayingXI = $(".ui-li-heading").eq(12).text().trim();
-    matchInfo.indStandBy = $(".ui-li-heading").eq(13).text().trim();
-    matchInfo.indSupportStaff = $(".ui-li-heading").eq(14).text().trim();
+  extractMatchDetails($, inningsData) {
+    const matchDetails = {};
 
-    return matchInfo;
+    matchDetails.match = $('div.cb-list-item h3:contains("Match")')
+      .next()
+      .text()
+      .trim();
+    matchDetails.date = $('div.cb-list-item h3:contains("Date")')
+      .next()
+      .text()
+      .trim();
+    matchDetails.matchTime = $('div.cb-list-item h3:contains("match time")')
+      .next()
+      .text()
+      .trim();
+    matchDetails.tossResult = $('div.cb-list-item h3:contains("toss result")')
+      .next()
+      .text()
+      .trim();
+    matchDetails.stadium = $('div.cb-list-item h3:contains("stadium")')
+      .next()
+      .text()
+      .trim();
+    matchDetails.umpires = $('div.cb-list-item h3:contains("Umpires")')
+      .next()
+      .text()
+      .trim();
+    matchDetails.thirdUmpire = $('div.cb-list-item h3:contains("Third Umpire")')
+      .next()
+      .text()
+      .trim();
+    matchDetails.matchReferee = $(
+      'div.cb-list-item h3:contains("Match Referee")'
+    )
+      .next()
+      .text()
+      .trim();
+    matchDetails.seriesName = $('div.cb-list-item h3:contains("Series Name")')
+      .next()
+      .text()
+      .trim();
+
+    for (const innings of inningsData) {
+      const { teamAbbreviation } = innings;
+
+      matchDetails[`${teamAbbreviation} PlayingXI`] = $(
+        `div.cb-list-item h3:contains('${teamAbbreviation} playing xi')`
+      )
+        .next()
+        .text()
+        .trim();
+      matchDetails[`${teamAbbreviation} StandBy`] = $(
+        `div.cb-list-item h3:contains('${teamAbbreviation} Stand by')`
+      )
+        .next()
+        .text()
+        .trim();
+      matchDetails[`${teamAbbreviation} SupportStaff`] = $(
+        `div.cb-list-item h3:contains('${teamAbbreviation} support staff')`
+      )
+        .next()
+        .text()
+        .trim();
+
+      matchDetails[`${teamAbbreviation} PlayingXI`] = $(
+        `div.cb-list-item h3:contains('${teamAbbreviation} playing xi')`
+      )
+        .next()
+        .text()
+        .trim();
+      matchDetails[`${teamAbbreviation} StandBy`] = $(
+        `div.cb-list-item h3:contains('${teamAbbreviation} stand by')`
+      )
+        .next()
+        .text()
+        .trim();
+      matchDetails[`${teamAbbreviation} SupportStaff`] = $(
+        `div.cb-list-item h3:contains('${teamAbbreviation} support staff')`
+      )
+        .next()
+        .text()
+        .trim();
+    }
+
+    return matchDetails;
+  }
+
+  extractPlayerId(onclickValue) {
+    const match = /show_innings_by_id\('(.+)',/.exec(onclickValue);
+    return match ? match[1] : null;
+  }
+
+  extractPlayersData($, id) {
+    const players = [];
+
+    $(`div#${id} table tbody tr`).each((index, element) => {
+      const playerName = $(element).find("td:nth-child(1) a b").text().trim();
+      const runs = $(element).find("td:nth-child(2) b").text().trim();
+      const balls = $(element).find("td:nth-child(2) span").text().trim();
+      const fours = $(element).find("td:nth-child(3)").text().trim();
+      const sixes = $(element).find("td:nth-child(4)").text().trim();
+      const strikeRate = $(element).find("td:nth-child(5)").text().trim();
+      let outDescription = ""; // Initialize outDescription as an empty string
+
+      // Use the "next" function to access the next row and retrieve outDescription
+      const outDescriptionElement = $(element).next().find("span.out-desc");
+      if (outDescriptionElement.length > 0) {
+        outDescription = outDescriptionElement.text().trim();
+      }
+
+      if (playerName) {
+        if (
+          runs !== "" &&
+          balls !== "" &&
+          !(runs === "- (0)" && balls === "- (0)")
+        ) {
+          players.push({
+            playerName,
+            runs,
+            balls,
+            fours,
+            sixes,
+            strikeRate,
+            outDescription,
+          });
+        } else {
+          const oversBowled = $(element).find("td:nth-child(2)").text().trim();
+          const maidens = $(element).find("td:nth-child(3)").text().trim();
+          const runsGiven = $(element).find("td:nth-child(4)").text().trim();
+          const wickets = $(element).find("td:nth-child(5) b").text().trim();
+
+          players.push({
+            playerName,
+            oversBowled,
+            maidens,
+            runsGiven,
+            wickets,
+          });
+        }
+      }
+    });
+
+    return players;
   }
 
   extractInningsData($) {
     const inningsData = [];
-    // Implement logic to extract innings data
-    $(".cb-list-item.ui-header.ui-header-small").each((index, element) => {
-      const innings = $(element).text().trim();
-      const tableRows = $(element).next().find(".table-row");
-      const players = [];
 
-      tableRows.each((index, row) => {
-        const playerName = $(row).find(".bat-bowl-data").text().trim();
-        const runs = $(row).find(".bat-bowl-data b").text().trim();
-        const balls = $(row).find(".bat-bowl-data span").text().trim();
-        const fours = $(row).find(".cbz-grid-table-fix").eq(2).text().trim();
-        const sixes = $(row).find(".cbz-grid-table-fix").eq(3).text().trim();
-        const strikeRate = $(row)
-          .find(".cbz-grid-table-fix")
-          .eq(4)
-          .text()
-          .trim();
-        const outDesc = $(row).find(".out-desc").text().trim();
+    $("div.btn-group.cbz-btn-group a").each((index, element) => {
+      const score = $(element).text().trim();
+      const [title, scoreValue] = score.split("-").map((item) => item.trim());
+      const teamAbbreviation = title.split(" ")[0];
+      const id = this.extractPlayerId($(element).attr("onclick"));
 
-        players.push({
-          playerName,
-          runs,
-          balls,
-          fours,
-          sixes,
-          strikeRate,
-          outDesc,
+      // Separate batting and bowling data
+      const players = this.extractPlayersData($, id);
+      const battingData = players.filter((player) => player.runs !== undefined);
+      const bowlingData = players.filter((player) => player.runs === undefined);
+
+      if (title !== "Commentary" && title !== "Summary" && title !== "Teams") {
+        inningsData.push({
+          title,
+          teamAbbreviation,
+          score,
+          battingData,
+          bowlingData,
         });
-      });
-
-      inningsData.push({ innings, players });
+      }
     });
 
     return inningsData;
+  }
+
+  extractPlayerIdFromLink(link) {
+    const match = /\/player\/(\d+)\//.exec(link);
+    return match ? match[1] : null;
   }
 }
 
