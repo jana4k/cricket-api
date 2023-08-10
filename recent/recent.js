@@ -135,7 +135,7 @@ async function getLiveMatchesData() {
     return cache.data;
   }
 
-  const url = "https://www.crictable.com/live-matches/";
+  const url = "https://www.crictable.com/recent-matches/";
   const response = await axios.get(url);
   const data = cheerio.load(response.data);
 
@@ -145,7 +145,7 @@ async function getLiveMatchesData() {
   return data;
 }
 
-app.get("/matches", async (req, res) => {
+app.get("/recent", async (req, res) => {
   try {
     const $ = await getLiveMatchesData();
     const liveMatches = $(".ui-live-matches");
@@ -165,7 +165,7 @@ app.get("/matches", async (req, res) => {
   }
 });
 
-app.get("/commentary/:matchID/:title", async (req, res) => {
+app.get("/commentary-recent/:matchID/:title", async (req, res) => {
   try {
     const { matchID, title } = req.params;
     const commentaryExtractor = new CommentaryExtractor(cheerio);
@@ -176,15 +176,5 @@ app.get("/commentary/:matchID/:title", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-app.get("/scorecard/:matchID/:title", async (req, res) => {
-  try {
-    const { matchID, title } = req.params;
-    const scorecardExtractor = new ScorecardExtractor(cheerio);
-    const scorecard = await scorecardExtractor.getScorecard(matchID, title);
-    res.json(scorecard);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+
 module.exports = app;
