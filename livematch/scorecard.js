@@ -31,86 +31,13 @@ class ScorecardExtractor {
   extractMatchDetails($, inningsData) {
     const matchDetails = {};
 
-    matchDetails.match = $('div.cb-list-item h3:contains("Match")')
-      .next()
-      .text()
-      .trim();
-    matchDetails.date = $('div.cb-list-item h3:contains("Date")')
-      .next()
-      .text()
-      .trim();
-    matchDetails.matchTime = $('div.cb-list-item h3:contains("match time")')
-      .next()
-      .text()
-      .trim();
-    matchDetails.tossResult = $('div.cb-list-item h3:contains("toss result")')
-      .next()
-      .text()
-      .trim();
-    matchDetails.stadium = $('div.cb-list-item h3:contains("stadium")')
-      .next()
-      .text()
-      .trim();
-    matchDetails.umpires = $('div.cb-list-item h3:contains("Umpires")')
-      .next()
-      .text()
-      .trim();
-    matchDetails.thirdUmpire = $('div.cb-list-item h3:contains("Third Umpire")')
-      .next()
-      .text()
-      .trim();
-    matchDetails.matchReferee = $(
-      'div.cb-list-item h3:contains("Match Referee")'
-    )
-      .next()
-      .text()
-      .trim();
-    matchDetails.seriesName = $('div.cb-list-item h3:contains("Series Name")')
-      .next()
-      .text()
-      .trim();
-
-    for (const innings of inningsData) {
-      const { teamAbbreviation } = innings;
-
-      matchDetails[`${teamAbbreviation} PlayingXI`] = $(
-        `div.cb-list-item h3:contains('${teamAbbreviation} playing xi')`
-      )
-        .next()
-        .text()
-        .trim();
-      matchDetails[`${teamAbbreviation} StandBy`] = $(
-        `div.cb-list-item h3:contains('${teamAbbreviation} Stand by')`
-      )
-        .next()
-        .text()
-        .trim();
-      matchDetails[`${teamAbbreviation} SupportStaff`] = $(
-        `div.cb-list-item h3:contains('${teamAbbreviation} support staff')`
-      )
-        .next()
-        .text()
-        .trim();
-
-      matchDetails[`${teamAbbreviation} PlayingXI`] = $(
-        `div.cb-list-item h3:contains('${teamAbbreviation} playing xi')`
-      )
-        .next()
-        .text()
-        .trim();
-      matchDetails[`${teamAbbreviation} StandBy`] = $(
-        `div.cb-list-item h3:contains('${teamAbbreviation} stand by')`
-      )
-        .next()
-        .text()
-        .trim();
-      matchDetails[`${teamAbbreviation} SupportStaff`] = $(
-        `div.cb-list-item h3:contains('${teamAbbreviation} support staff')`
-      )
-        .next()
-        .text()
-        .trim();
-    }
+    $("div.cb-list-item").each((index, element) => {
+      const heading = $(element).find("h3").text().trim();
+      const content = $(element).find(".list-content").text().trim();
+      if (heading && content) {
+        matchDetails[heading] = content;
+      }
+    });
 
     return matchDetails;
   }
